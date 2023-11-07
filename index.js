@@ -11,6 +11,10 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use({
+  origin: "http://localhost:5173",
+  credentials: true,
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.v2vdoex.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -26,8 +30,16 @@ const client = new MongoClient(uri, {
 // middleware
 const logger = async(req, res, next) => {
   const {token} = req.cookies
-  console.log('called', req.host, req.originalUrl);
-  next();
+  if (!token) {
+    return res.status(401).send({ message: "UnAuthorized Access" });
+  }
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+     if (err) {
+       return res.status(401).send({ message: "UnAuthorized Access" });
+     }
+     req.user = decoded
+     next();
+  });
 }
 
 
@@ -60,6 +72,21 @@ async function run() {
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking)
       res.send(result);
+    })
+
+    // get bookings 
+    app.get('/api/v1/user/bookings', logger, async(req, res)=> {
+      const queryEmail = req.body.email;
+      const tokenEmail = req.user.email;
+      if (queryEmail !== tokenEmail) {
+        return res.status(403).send({message: 'Forbidden Access'});
+      }
+      let query = {}
+      if(queryEmail){
+        query.email = queryEmail
+      }  
+        const result = await bookingCollection.find(query).toArray()
+        res.send(result)
     })
 
     // booking cancel
