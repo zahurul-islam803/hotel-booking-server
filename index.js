@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const cookieParser = require("cookie-parser");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -8,6 +10,7 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.v2vdoex.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -19,6 +22,15 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// middleware
+const logger = async(req, res, next) => {
+  const {token} = req.cookies
+  console.log('called', req.host, req.originalUrl);
+  next();
+}
+
+
 
 async function run() {
   try {
@@ -52,7 +64,22 @@ async function run() {
 
     // booking cancel
     app.delete('/api/v1/user/cancel-booking/:bookingId', async(req, res) => {
+      const id = req.params.bookingId;
+      const query = {_id: new ObjectId(id)};
+      const result = await bookingCollection.deleteOne(query)
+      res.send(result);
+    })
 
+    // access token
+    app.post('/api/v1/auth/access-token', async(req, res)=> {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '20h'})
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false
+        })
+        .send({ success: true })
     })
 
     await client.db("admin").command({ ping: 1 });
