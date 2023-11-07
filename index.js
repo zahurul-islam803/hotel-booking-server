@@ -28,7 +28,32 @@ async function run() {
 
 
     const roomCollection = client.db('hotelDB').collection('rooms');
+    const bookingCollection = client.db('hotelDB').collection('bookings');
 
+    // get all rooms
+    app.get('/api/v1/rooms', async(req, res)=>{
+      let queryObj = {};
+      const price = req.query.price;
+      console.log(price)
+      if (price) {
+        queryObj.price = price;
+      }
+      const cursor = roomCollection.find(queryObj)
+      const result = await cursor.toArray()
+      res.send(result);
+    })
+
+    // bookings added
+    app.post('/api/v1/user/add-booking', async(req, res)=> {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking)
+      res.send(result);
+    })
+
+    // booking cancel
+    app.delete('/api/v1/user/cancel-booking/:bookingId', async(req, res) => {
+
+    })
 
     await client.db("admin").command({ ping: 1 });
     console.log(
