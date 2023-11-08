@@ -44,8 +44,6 @@ const logger = async(req, res, next) => {
   });
 }
 
-
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -87,9 +85,6 @@ async function run() {
     app.get("/api/v1/user/bookings", logger, async (req, res) => {
       const queryEmail = req.body.email;
       const tokenEmail = req.user.email;
-      if (queryEmail !== tokenEmail) {
-        return res.status(403).send({ message: "Forbidden Access" });
-      }
       let query = {};
       if (queryEmail) {
         query.email = queryEmail;
