@@ -16,10 +16,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-// app.use({
-//   origin: "http://localhost:5173",
-//   credentials: true,
-// });
+
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.v2vdoex.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -55,65 +52,74 @@ async function run() {
     // await client.connect();
     // Send a ping to confirm a successful connection
 
-
-    const roomCollection = client.db('hotelDB').collection('rooms');
-    const bookingCollection = client.db('hotelDB').collection('bookings');
+    const roomCollection = client.db("hotelDB").collection("rooms");
+    const bookingCollection = client.db("hotelDB").collection("bookings");
 
     // get all rooms
-    app.get('/api/v1/rooms', async(req, res)=>{
+    app.get("/api/v1/rooms", async (req, res) => {
       let queryObj = {};
       const price = req.query.price;
-      console.log(price)
+      console.log(price);
       if (price) {
         queryObj.price = price;
       }
-      const cursor = roomCollection.find(queryObj)
-      const result = await cursor.toArray()
+      const cursor = roomCollection.find(queryObj);
+      const result = await cursor.toArray();
       res.send(result);
-    })
+    });
+
+    // added rooms booking
+    app.get("/api/v1/room-booking/:roomId", async (req, res) => {
+      const id = req.params.roomId;
+      const query = { _id: new ObjectId(id) };
+      const result = await roomCollection.findOne(query);
+      res.send(result);
+    });
 
     // bookings added
-    app.post('/api/v1/user/add-booking', async(req, res)=> {
+    app.post("/api/v1/user/add-booking", async (req, res) => {
       const booking = req.body;
-      const result = await bookingCollection.insertOne(booking)
+      const result = await bookingCollection.insertOne(booking);
       res.send(result);
-    })
+    });
 
-    // get bookings 
-    app.get('/api/v1/user/bookings', logger, async(req, res)=> {
+    // get bookings
+    app.get("/api/v1/user/bookings", logger, async (req, res) => {
       const queryEmail = req.body.email;
       const tokenEmail = req.user.email;
       if (queryEmail !== tokenEmail) {
-        return res.status(403).send({message: 'Forbidden Access'});
+        return res.status(403).send({ message: "Forbidden Access" });
       }
-      let query = {}
-      if(queryEmail){
-        query.email = queryEmail
-      }  
-        const result = await bookingCollection.find(query).toArray()
-        res.send(result)
-    })
+      let query = {};
+      if (queryEmail) {
+        query.email = queryEmail;
+      }
+      const result = await bookingCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // booking cancel
-    app.delete('/api/v1/user/cancel-booking/:bookingId', async(req, res) => {
+    app.delete("/api/v1/user/cancel-booking/:bookingId", async (req, res) => {
       const id = req.params.bookingId;
-      const query = {_id: new ObjectId(id)};
-      const result = await bookingCollection.deleteOne(query)
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.deleteOne(query);
       res.send(result);
-    })
+    });
 
     // access token
-    app.post('/api/v1/auth/access-token', async(req, res)=> {
+    app.post("/api/v1/auth/access-token", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '20h'})
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "20h",
+      });
       res
         .cookie("token", token, {
           httpOnly: true,
           secure: true,
-          sameSite: 'none'
+          sameSite: "none",
         })
-        .send({ success: true })
-    })
+        .send({ success: true });
+    });
 
     await client.db("admin").command({ ping: 1 });
     console.log(
