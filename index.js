@@ -74,6 +74,32 @@ async function run() {
       res.send(result);
     });
 
+    // get rooms booking
+    app.get("/api/v1/user/update-booking/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
+
+    // update method
+    app.put('/api/v1/user/update/:id', async(req, res)=>{
+      const id = {_id: new ObjectId(req.params.id)};
+      const body = req.body;
+      const updateData = {
+        $set: {
+          customerName: body.customerName,
+          email: body.email,
+          date: body.date,
+          timeSlot: body.timeSlot,
+          address: body.address,
+        },
+      };
+      const option = {upsert: true}
+      const result = await bookingCollection.updateOne(id, updateData, option)
+      res.send(result)
+    })
+
     // bookings added
     app.post("/api/v1/user/add-booking", async (req, res) => {
       const booking = req.body;
