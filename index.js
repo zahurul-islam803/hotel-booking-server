@@ -10,9 +10,9 @@ const port = process.env.PORT || 5000;
 // middleware
 app.use(
   cors({
-    origin:  "https://hotelhavenhub.web.app",
+    origin: "https://hotelhavenhub.web.app",
     credentials: true,
-    optionsSuccessStatus: 200
+    optionsSuccessStatus: 200,
   })
 );
 app.use(express.json());
@@ -53,6 +53,7 @@ async function run() {
 
     const roomCollection = client.db("hotelDB").collection("rooms");
     const bookingCollection = client.db("hotelDB").collection("bookings");
+    const reviewCollection = client.db("hotelDB").collection("reviews");
 
     // get all rooms
     app.get("/api/v1/rooms", async (req, res) => {
@@ -105,6 +106,12 @@ async function run() {
     app.post("/api/v1/user/add-booking", async (req, res) => {
       const booking = req.body;
       const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+    // review added
+    app.post("/api/v1/user/add-review", async (req, res) => {
+      const review = req.body;
+      const result = await reviewCollection.insertOne(review);
       res.send(result);
     });
 
