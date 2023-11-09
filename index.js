@@ -59,7 +59,6 @@ async function run() {
     app.get("/api/v1/rooms", async (req, res) => {
       let queryObj = {};
       const price = req.query.price;
-      console.log(price);
       if (price) {
         queryObj.price = price;
       }
@@ -115,6 +114,13 @@ async function run() {
       res.send(result);
     });
 
+    // get review
+    app.get("/api/v1/user/review", async (req, res) => {
+      const body = req.body;
+      const result = await reviewCollection.find(body).toArray();
+      res.send(result);
+    });
+    
     // get bookings
     app.get("/api/v1/user/bookings", logger, async (req, res) => {
       const queryEmail = req.body.email;
